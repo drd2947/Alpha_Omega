@@ -1,0 +1,102 @@
+Graphics framework:
+
+-Window(double top, double bottom, double left, double right, bool decorate)
+--Creates a decorated/undecorated window
+--The main window for the program should be full screen and decorated by default
+--Exposes events:
+---GotFocus - fires when the window is focused by the operating system window manager
+---LostFocus - fires when the window loses focus of the OS window manager
+---OnMinimize - fires when the window is minimized to the taskbar
+---OnRestore - fires when the window is restored from the taskbar
+---OnResize - fires when the window size changes
+---OnMove - fires when the window is moved
+---OnClose - fires when the window is closed
+
+-BaseUI(double top, double bottom, double left, double right)
+--Creates a rectangular region starting at [top] to [bottom] % of the window height with zero being the bottom, from [left] to [right] % of window width zero being left
+--Superclass for all of the UI elements that will be placed within a window - the % scalings should be maintained through all resizes and moves of the parent window
+--Exposes events:
+---LeftClickDown - fires when the user presses the left mouse button within the rect
+---LeftClickUp - fires when the user releases the left mouse button within the rect
+---RightClickDown - fires when the user presses the right mouse button within the rect
+---RightClickUp - fires when the user releases the right mouse button within the rect
+---MiddleClickDown - fires when the user presses the middle mouse button within the rect
+---MiddleClickUp - fires when the user releases the middle mouse button within the rect
+---MouseEnter - fires when the cursor enters the rect
+---MouseLeave - fires when the cursor leaves the rect
+---MouseMove - fires when the cursor moves within the rect
+---MouseWheelUp - fires when the mouse wheel is spun up one tick
+---MouseWheelDown - fires when the mouse wheel is spun down one tick
+---KeyDown - fires when the user presses a key, provides a value indicating which key
+---KeyUp - fires when the user releases a key, provides a value indicating which key
+
+-Button(double top, double bottom, double left, double right, Image default, Image click, Image hover) Extends BaseUI
+--Click-able button
+--Exposes getters/setters:
+---Image DefaultImage - sets a .png file (with transparency) to display on the rect (translated and scaled to fit) by default (no other conditions met)
+---Image HoverImage - sets a .png file (with transparency) to display on the rect (translated and scaled to fit) when the cursor is in the rect area
+---Image ClickImage - sets a .png file (with transparency) to display on the rect (translated and scaled to fit) when any ClickDown event has been fired, but no ClickUp event has fired subsequently
+
+-TextBox(double top, double bottom, double left, double right, String text, bool edit) Extends BaseUI
+--Editable text box (shows blinking text cursor)
+--Exposes getters/setters:
+---String text - gets/sets the text to display within the textbox
+---Bool editable - gets/sets the textbox to editable (white background) or uneditable (grey background, does not accept input but text is still selectable)
+--Exposes events:
+---TextChanged - fires when a user changes the text in any way, provides the current index post-change
+---SelectionChanged - fires when the user selects any portion of the text, provides the selected text string and start and end int indices
+--Methods:
+---Select(int start, int end) - sets the selection to the text between indices start and end, inclusive - returns the selected text as a String
+
+-Dropdown(double top, double bottom, double left, double right, String[] options) Extends BaseUI
+--Click-able drop-down list of options (clicking on the closed menu opens the menu, displaying the list of options, clicking on any closes the menu and displays the selected item on the dropdown)
+--Exposes getters/setters:
+---String[] options - gets/sets the array of options to display in the box
+---int selection - gets the int index of the selected option/sets the selection to the passed int index
+--Exposes events:
+---Opened - fires when the menu is opened
+---Close - fires when the menu is closed
+---SelectionChanged - fires when the selection is changed by any method, provides the new selection index
+
+-Table(double top, double bottom, double left, double right, String[] columns, BaseUI[] cells) Extends BaseUI
+--Editable table/spreadsheet, accepts an array of strings to display at the top as the column names and an array of Button/TextBox/Dropdown defining how the user will interface with each cell in the table
+--Exposes getters/setters:
+---String[] columns - gets/sets the array of column names
+---BaseUI[] cells - gets an array of the canonical types of the cells/sets the layout of the cells
+--Methods:
+---Row(BaseUI[] cells) - adds the passed row to the table, at the bottom
+
+-TabPane(double top, double bottom, double left, double right) Extends BaseUI
+--Click-able tabs control, displays available tabs and their labels across the top in a region with a static height, selected tab's contents are scaled to display in the remaining area
+--Exposes getters/setters:
+---int selection - gets the int index of the selected option
+--Exposes events:
+---SelectionChanged - fires when the selected tab changes for any reason
+
+-Tab(String name) Extends BaseUI
+--Container for other BaseUI elements
+--Exposes events:
+---OnSelect - fires when the tab is selected
+
+
+Demo program:
+-Full-screen, decorated window
+-TabPane on the entire window area
+--Tabs: Query, Design
+-Query tab is split into two halves: upper and lower
+--Top half is an editable textbox for most of its height, with an uneditable textbox strip at the bottom
+---The editable textbox accepts SQL query input, and provides intellisense-like suggestions for SQL keywords, tables in the DB, and columns in the tables
+----Pressing F5 runs the query against the DB
+---The status bar at the bottom provides information about the result of running the query - success or failure, number of rows, etc.
+--Bottom half contains a table
+---The table is populated automatically from the results of the query - cells are uneditable text boxes
+-Design tab is a large table
+--The table has columns: "Name" and "Columns" and layout: button, uneditable textbox
+---Each button is labeled with the name of one of the tables in the DB, the corresponding textbox is the number of columns in that table
+---All user-created tables are presented, in alphabetical order
+---Clicking a button opens a new window
+----Contains a table with columns: "Name", "Type", "Size", "Nullable", "Primary", "Unique", and "Foreign"; with layout: textbox, dropdown, textbox, dropdown, dropdown, dropdown, dropdown
+----The "Name" and "Size" fields accept any text input; "Type" allows selection of int, float, and varchar; the next three accept either true or false; the "Foreign" dropdown accepts the name of any other table in the DB
+----The table is populated with this metadata for every column in the table, sorted by ordinal, with the last row being blank and allowing creation of new columns
+----Closing this window will automatically generate the necessary queries, and modify the DB to reflect the changes made; if no changes are made, no query should be attempted
+---The last row in the table is a button labeled "New", which allows entry of a new table name and then opens the editor window for the new table
